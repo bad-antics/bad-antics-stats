@@ -21,6 +21,8 @@ function log_normal_cdf(x) {
 
 /**
  * Calculates the users rank.
+ * Modified for bad-antics stats with adjusted weights for security researchers
+ * who have many repos/tools but work differently than typical OSS contributors.
  *
  * @param {object} params Parameters on which the user's rank depends.
  * @param {boolean} params.all_commits Whether `include_all_commits` was used.
@@ -39,29 +41,33 @@ function calculateRank({
   prs,
   issues,
   reviews,
-  // eslint-disable-next-line no-unused-vars
-  repos, // unused
+  repos,
   stars,
   followers,
 }) {
-  const COMMITS_MEDIAN = all_commits ? 1000 : 250,
+  // Adjusted medians - lower medians = easier to reach higher percentiles
+  const COMMITS_MEDIAN = all_commits ? 500 : 100,
     COMMITS_WEIGHT = 2;
-  const PRS_MEDIAN = 50,
-    PRS_WEIGHT = 3;
-  const ISSUES_MEDIAN = 25,
+  const PRS_MEDIAN = 30,
+    PRS_WEIGHT = 2;
+  const ISSUES_MEDIAN = 15,
     ISSUES_WEIGHT = 1;
-  const REVIEWS_MEDIAN = 2,
-    REVIEWS_WEIGHT = 1;
-  const STARS_MEDIAN = 50,
-    STARS_WEIGHT = 4;
+  const REVIEWS_MEDIAN = 1,
+    REVIEWS_WEIGHT = 0.5;
+  // Give more weight to repos for security researchers with many tools
+  const REPOS_MEDIAN = 100,
+    REPOS_WEIGHT = 3;
+  const STARS_MEDIAN = 30,
+    STARS_WEIGHT = 3;
   const FOLLOWERS_MEDIAN = 10,
-    FOLLOWERS_WEIGHT = 1;
+    FOLLOWERS_WEIGHT = 1.5;
 
   const TOTAL_WEIGHT =
     COMMITS_WEIGHT +
     PRS_WEIGHT +
     ISSUES_WEIGHT +
     REVIEWS_WEIGHT +
+    REPOS_WEIGHT +
     STARS_WEIGHT +
     FOLLOWERS_WEIGHT;
 
@@ -74,6 +80,7 @@ function calculateRank({
       PRS_WEIGHT * exponential_cdf(prs / PRS_MEDIAN) +
       ISSUES_WEIGHT * exponential_cdf(issues / ISSUES_MEDIAN) +
       REVIEWS_WEIGHT * exponential_cdf(reviews / REVIEWS_MEDIAN) +
+      REPOS_WEIGHT * exponential_cdf(repos / REPOS_MEDIAN) +
       STARS_WEIGHT * log_normal_cdf(stars / STARS_MEDIAN) +
       FOLLOWERS_WEIGHT * log_normal_cdf(followers / FOLLOWERS_MEDIAN)) /
       TOTAL_WEIGHT;
