@@ -28,7 +28,7 @@ jobs:
 
       - name: Install & Test
         run: |
-          npm ci
+          npm ci --legacy-peer-deps
           npm run test
 
       - name: Run ESLint
